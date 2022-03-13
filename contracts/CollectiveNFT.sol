@@ -10,7 +10,9 @@ contract CollectiveNFT is ERC721 {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 
-    uint256 private constant REWARDS_ROUND_MIN_DURATION = 5 days;
+    uint256 public constant NFT_PRICE = 1 ether;
+    // uint256 private constant REWARDS_ROUND_MIN_DURATION = 5 days;
+    uint256 private constant REWARDS_ROUND_MIN_DURATION = 2 minutes;
 
     uint256 public lastSnapshotIdForRewards;
     uint256 public lastRecordedSnapshotTimestamp;
@@ -30,7 +32,7 @@ contract CollectiveNFT is ERC721 {
     }
 
     function buyNFT() public payable {
-        require(msg.value == 1 ether, "amount should be 1 ether");
+        require(msg.value == NFT_PRICE, "amount should be 1 ether");
         _mintNFT(msg.sender);
     }
 
@@ -42,7 +44,7 @@ contract CollectiveNFT is ERC721 {
         emit CollectiveNFTMinted(msg.sender, newItemId);
     }
 
-    function distributeRewards() public returns (uint256) {
+    function distributeRewards() external returns (uint256) {
         uint256 rewards = 0;
 
         if (isNewRewardsRound()) {
@@ -55,13 +57,13 @@ contract CollectiveNFT is ERC721 {
         require(totalBalanceAtSnapshot >= 100000 * 10 ** 18, "not eligible for reward");
 
         if (totalBalanceAtSnapshot > 0 && totalStakeSupply > 0) {
-            rewards = totalBalanceAtSnapshot * 10 ** 18 / totalStakeSupply;
-            if (rewards > 0 && !_hasRetrivedReward(msg.sender)) {
+            rewards = address(this).balance * totalBalanceAtSnapshot / totalStakeSupply;
+            if (rewards > 0) {
+                require(!_hasRetrivedReward(msg.sender), "already retrived reward");
                 payable(msg.sender).transfer(rewards);
                 lastRewardTimestamps[msg.sender] = block.timestamp;
             }
         }
-
 
         return rewards;
     }

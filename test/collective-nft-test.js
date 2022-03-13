@@ -42,12 +42,18 @@ describe("CollectiveNFT", function () {
     });
 
     it("Should distribute reward", async function () {
-        await ethers.provider.send("evm_increaseTime", [5 * 24 * 60 * 60]); // 5 days
+        // await ethers.provider.send("evm_increaseTime", [5 * 24 * 60 * 60]); // 5 days
+        await ethers.provider.send("evm_increaseTime", [2 * 60 * 60]); // 2 minutes
         await this.collectiveNFT.connect(alice).distributeRewards();
         await this.collectiveNFT.connect(bob).distributeRewards();
     });
 
-    it("Should not get reward", async function () {
+    it("Should not distribute reward if already retrived", async function () {
+        await expect(this.collectiveNFT.connect(alice).distributeRewards())
+        .to.be.revertedWith('already retrived reward');
+    });
+
+    it("Should not get reward if not enough stakeholder", async function () {
         await expect(this.collectiveNFT.connect(charlie).distributeRewards())
         .to.be.revertedWith('not eligible for reward');
     });
